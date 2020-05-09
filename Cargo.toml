@@ -1,0 +1,21 @@
+[package]
+name = "rustymon"
+version = "0.1.0"
+authors = ["Shane Gibbs <shane@hands.net.nz>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4"
+env_logger = "0.7.1"
+reqwest = { version = "0.10", features = ["json"] }
+futures = "0.3.0"
+tokio = { version = "0.2", features = ["macros", "tcp", "signal", "time"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
