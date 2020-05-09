@@ -1,32 +1,43 @@
 // use config::Config;
-use log::{debug, info, warn, error};
 use futures::future;
+use log::{error, info};
 
+mod config;
 mod http;
+mod status;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    debug!("Setting up");
+    let config_file = "rustymon.yaml";
+    let config = config::read_from_file(config_file)
+        .map_err(|e| format!("Failed to load config {}: {}", config_file, e))?;
+    let s = serde_yaml::to_string(&config)?;
+    info!("Config {}", s);
 
-    let client = http::Client::new()?;
+    let status = status::Status::new();
+    let http_client = http::Client::new()?;
 
-    let work = vec![
-        Box::pin(client.check("https://www.vividseats.com")),
-        Box::pin(client.check("https://skybox.vividseats.com/health")),
-        Box::pin(client.check("https://skybox.vividseats.com/services/health")),
-        ];
+    let work: Vec<_> = config
+        .checks
+        .iter()
+        .map(|c| {
+            Box::pin(match c {
+                config::CheckConfig::Http(c) => http_client.check(&status, c.url.clone()),
+            })
+        })
+        .collect();
 
     let (done, _idx, _remaining) = future::select_all(work).await;
 
     match done {
-         Ok(_) => {
-             // do something with the values
-         }
-         Err(err) => {
+        Ok(_) => {
+            // do something with the values
+        }
+        Err(err) => {
             error!("processing failed; error = {}", err);
-         }
+        }
     }
 
     Ok(())

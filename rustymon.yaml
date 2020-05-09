@@ -1,0 +1,16 @@
+checks:
+- type: http
+  method: GET
+  url: https://gibbsdevops.com
+- type: http
+  method: GET
+  url: https://notebook.gibbsdevops.com
+- type: http
+  method: GET
+  url: https://www.vividseats.com
+- type: http
+  method: GET
+  url: https://skybox.vividseats.com/health
+- type: http
+  method: GET
+  url: https://skybox.vividseats.com/services/health

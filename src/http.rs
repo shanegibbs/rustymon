@@ -1,8 +1,31 @@
-// use crate::Config;
-use log::{debug, info};
-use reqwest::header;
+use futures::Future;
+use log::{info, trace};
+use reqwest::{header, Method};
+use serde::{Deserialize, Serialize};
+use std::error::Error;
+use std::pin::Pin;
 use std::time::Duration;
 use tokio::time;
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Config {
+    pub method: String,
+    pub url: String,
+}
+
+// impl Config {
+//     pub fn check(
+//         &self,
+//     ) -> Result<Pin<Box<dyn Future<Output = Result<(), Box<dyn std::error::Error>>>>>, Box<dyn Error>>
+//     {
+//         async {
+//             let client = Client::new().unwrap();
+//             // Ok(Box::pin(client.check(self.url.clone())))
+//             client.check(self.url.clone()).await?
+//         }
+//     }
+// }
 
 pub struct Client {
     client: reqwest::Client,
@@ -14,6 +37,11 @@ impl Client {
         headers.insert(
             header::CONTENT_TYPE,
             header::HeaderValue::from_static("application/json"),
+        );
+
+        headers.insert(
+            header::USER_AGENT,
+            header::HeaderValue::from_static("rustymon"),
         );
 
         // if let Some(token) = &config.k8s_token {
@@ -41,22 +69,30 @@ impl Client {
         })
     }
 
-    pub async fn check(&self, url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn check(
+        &self,
+        status: &crate::status::Status,
+        url: String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut interval = time::interval(Duration::from_millis(1000));
+
+        let method = Method::GET;
 
         loop {
             interval.tick().await;
 
-            debug!("Checking {}", url);
+            trace!("Checking {}", url);
 
             let result = self
                 .client
-                .head(url)
+                .request(method.clone(), &url)
                 .send()
                 .await?
                 .status();
 
             info!("Result: {} {}", result, url);
+
+            status.handle();
         }
     }
 }
