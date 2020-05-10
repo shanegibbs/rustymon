@@ -29,6 +29,7 @@ impl Status {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct InnerStatus {
+    last: String,
     check_summary: CheckSummary,
     checks: HashMap<String, CheckStatus>,
 }
@@ -68,6 +69,7 @@ struct StatusState {
 impl InnerStatus {
     pub fn new() -> Self {
         InnerStatus {
+            last: format!(""),
             check_summary: Default::default(),
             checks: HashMap::new(),
         }
@@ -115,17 +117,69 @@ impl InnerStatus {
     }
 
     fn on_change(&mut self) {
-        let (total, good, bad) = self
-            .checks
-            .values()
-            .fold((0, 0, 0), |(total, good, bad), check| {
-                (total + 1, good + if check.state.ok { 1 } else { 0}, bad + if !check.state.ok { 1 } else { 0})
-            });
+        let (total, good, bad) =
+            self.checks
+                .values()
+                .fold((0, 0, 0), |(total, good, bad), check| {
+                    (
+                        total + 1,
+                        good + if check.state.ok { 1 } else { 0 },
+                        bad + if !check.state.ok { 1 } else { 0 },
+                    )
+                });
         self.check_summary.total = total;
         self.check_summary.good = good;
         self.check_summary.bad = bad;
 
-        let s = serde_yaml::to_string(&self).unwrap();
-        info!("{}", s);
+        // let s = serde_yaml::to_string(&self).unwrap();
+        // info!("{}", s);
+
+        let mut l = String::new();
+        if self.check_summary.bad == 0 {
+            l.push_str(
+                format!(
+                    "All checks ok [{}/{}]",
+                    self.check_summary.good, self.check_summary.total
+                )
+                .as_str(),
+            );
+        } else {
+            let failures = self
+                .checks
+                .iter()
+                .filter(|i| !i.1.state.ok)
+                .map(|i| i.0.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            l.push_str(
+                format!(
+                    "Failures: {} [{}/{}]",
+                    failures, self.check_summary.good, self.check_summary.total
+                )
+                .as_str(),
+            );
+        }
+
+        if self.last == l {
+            return;
+        }
+
+        {
+            use std::fs::File;
+            use std::io::Write;
+            let mut file = File::create("/home/shane/.rustymon.status").unwrap();
+            file.write_all(l.as_bytes()).unwrap();
+        }
+        self.last = l;
+
+        {
+            use std::process::Command;
+            Command::new("sh")
+                .arg("-c")
+                .arg("tmux refresh-client -S")
+                .output()
+                .expect("failed to execute process");
+        }
     }
 }

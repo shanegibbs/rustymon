@@ -9,7 +9,7 @@ mod status;
 
 mod common {
     pub(crate) use crate::config::CheckConfig;
-    pub(crate) use log::{error, debug, info, trace};
+    pub(crate) use log::{debug, error, info, trace};
     pub(crate) use serde::{Deserialize, Serialize};
     pub(crate) use std::error::Error;
 }

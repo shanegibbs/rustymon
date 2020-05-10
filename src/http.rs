@@ -102,7 +102,7 @@ impl Client {
         holder: crate::Holder<Config>,
         status: &crate::status::Status,
     ) -> Result<(), Box<dyn Error>> {
-        let mut interval = time::interval(Duration::from_millis(1000));
+        let mut interval = time::interval(Duration::from_millis(20000));
 
         loop {
             interval.tick().await;

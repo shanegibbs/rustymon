@@ -5,14 +5,14 @@ checks:
     type: http
     method: GET
     url: https://gibbsdevops.com
-  gibbsdevops-bla:
-    type: http
-    method: GET
-    url: https://gibbsdevops.com/bla
-  test-fail:
-    type: http
-    method: GET
-    url: https://adfsdjnfisjnck.com
+  # gibbsdevops-bla:
+  #   type: http
+  #   method: GET
+  #   url: https://gibbsdevops.com/bla
+  # test-fail:
+  #   type: http
+  #   method: GET
+  #   url: https://adfsdjnfisjnck.com
   notebook:
     type: http
     method: GET
