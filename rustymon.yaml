@@ -1,16 +1,35 @@
 checks:
-- type: http
-  method: GET
-  url: https://gibbsdevops.com
-- type: http
-  method: GET
-  url: https://notebook.gibbsdevops.com
-- type: http
-  method: GET
-  url: https://www.vividseats.com
-- type: http
-  method: GET
-  url: https://skybox.vividseats.com/health
-- type: http
-  method: GET
-  url: https://skybox.vividseats.com/services/health
+# - type: ping
+#   address: 127.0.0.1
+  gibbsdevops:
+    type: http
+    method: GET
+    url: https://gibbsdevops.com
+  gibbsdevops-bla:
+    type: http
+    method: GET
+    url: https://gibbsdevops.com/bla
+  test-fail:
+    type: http
+    method: GET
+    url: https://adfsdjnfisjnck.com
+  notebook:
+    type: http
+    method: GET
+    url: https://notebook.gibbsdevops.com
+  www-vividseats:
+    type: http
+    method: GET
+    url: https://www.vividseats.com
+  skybox-ui:
+    type: http
+    method: GET
+    url: https://skybox.vividseats.com/health
+  skybox-services-ui:
+    type: http
+    method: GET
+    url: https://skybox.vividseats.com/services/health
+  sittercity:
+    type: http
+    method: GET
+    url: https://www.sittercity.com

@@ -1,18 +1,22 @@
-use futures::Future;
-use log::{info, trace};
+use crate::common::*;
 use reqwest::{header, Method};
-use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::pin::Pin;
 use std::time::Duration;
 use tokio::time;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub method: String,
     pub url: String,
+    // #[serde(flatten)]
+    // pub common: CommonCheckConfig,
 }
+
+// #[derive(Debug, Serialize, Deserialize)]
+// #[serde(rename_all = "camelCase")]
+// pub struct CommonCheckConfig {
+//     pub interval: usize,
+// }
 
 // impl Config {
 //     pub fn check(
@@ -69,30 +73,41 @@ impl Client {
         })
     }
 
-    pub async fn check(
-        &self,
-        status: &crate::status::Status,
-        url: String,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut interval = time::interval(Duration::from_millis(1000));
+    pub async fn do_check(&self, url: &str) -> Result<(), Box<dyn std::error::Error>> {
+        trace!("Checking {}", url);
 
         let method = Method::GET;
 
+        self.client
+            .request(method.clone(), url)
+            .send()
+            .await
+            .map_err(|e| {
+                debug!("Result: {} {}", e, url);
+                format!("failed: {}", e).into()
+            })
+            .and_then(|r| {
+                if r.status() == 200 {
+                    trace!("Result: {} {}", r.status(), url);
+                    Ok(())
+                } else {
+                    debug!("Result: {} {}", r.status(), url);
+                    Err("not 200".into())
+                }
+            })
+    }
+
+    pub async fn check(
+        &self,
+        holder: crate::Holder<Config>,
+        status: &crate::status::Status,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut interval = time::interval(Duration::from_millis(1000));
+
         loop {
             interval.tick().await;
-
-            trace!("Checking {}", url);
-
-            let result = self
-                .client
-                .request(method.clone(), &url)
-                .send()
-                .await?
-                .status();
-
-            info!("Result: {} {}", result, url);
-
-            status.handle();
+            let result = self.do_check(holder.config.url.as_str()).await;
+            status.handle(&holder, result);
         }
     }
 }

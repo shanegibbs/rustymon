@@ -1,22 +1,21 @@
-use futures::Future;
-use serde::{Deserialize, Serialize};
-use std::error::Error;
+use crate::common::*;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::pin::Pin;
+use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    pub checks: Vec<CheckConfig>,
+    pub checks: HashMap<String, CheckConfig>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum CheckConfig {
     Http(crate::http::Config),
+    // Ping(crate::ping::Config),
 }
 
 // impl CheckConfig {
