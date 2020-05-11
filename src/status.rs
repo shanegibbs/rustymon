@@ -166,9 +166,12 @@ impl InnerStatus {
         }
 
         {
+            use std::env;
             use std::fs::File;
             use std::io::Write;
-            let mut file = File::create("/home/shane/.rustymon.status").unwrap();
+
+            let path = env::home_dir().unwrap().join(".rustymon.status");
+            let mut file = File::create(path).unwrap();
             file.write_all(l.as_bytes()).unwrap();
         }
         self.last = l;
